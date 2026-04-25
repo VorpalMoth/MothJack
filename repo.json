@@ -1,0 +1,13 @@
+[{
+  "Author": "Vorpal Gabbiani",
+  "Name": "MothJack",
+  "Punchline": "Blackjack dealer dashboard for FFXIV",
+  "Description": "A dealer-side dashboard for running Blackjack games in FFXIV.",
+  "InternalName": "MothJack",
+  "AssemblyVersion": "0.0.0.1",
+  "RepoUrl": "https://github.com/VorpalMoth/MothJack",
+  "DownloadLinkInstall": "https://github.com/VorpalMoth/MothJack/releases/latest/download/MothJack.zip",
+  "DownloadLinkUpdate": "https://github.com/VorpalMoth/MothJack/releases/latest/download/MothJack.zip",
+  "DownloadCount": 0,
+  "LastUpdate": 0
+}]
