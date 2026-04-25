@@ -1,78 +1,155 @@
-> ⚠️ **Don't click Fork!**
-> 
-> This is a GitHub Template repo. If you want to use this for a plugin, [use this template][new-repo] to make a new repo!
->
-> ![image](https://github.com/goatcorp/SamplePlugin/assets/16760685/d9732094-e1ed-4769-a70b-58ed2b92580c)
+# MothJack
+### A FFXIV Dalamud Plugin for Blackjack Dealers
 
-# SamplePlugin
+MothJack is a dealer-side dashboard plugin for running Blackjack games inside Final Fantasy XIV. It listens to party chat macros and automatically tracks hand totals, dealer cards, player banks, splits, doubles, and busts — so the dealer can focus on running the game instead of doing math.
 
-[![Use This Template badge](https://img.shields.io/badge/Use%20This%20Template-0?logo=github&labelColor=grey)][new-repo]
+---
 
+## Features
 
-Simple example plugin for Dalamud.
+- **Macro-driven** — the dealer's existing macros feed data into the plugin automatically
+- **Hand tracking** — cards are tracked in real time for every player and the dealer
+- **Split support** — full split hand tracking with separate rows and bank consolidation
+- **Double Down** — automatically doubles the bet and closes the hand after one card
+- **Bust detection** — automatically detects and announces busts in party chat
+- **Active player highlight** — the current player's row is highlighted green
+- **Clickable bet editing** — click any bet cell to edit it inline
+- **Manual override buttons** — Win / Lose / BJ / Push per player for edge cases
+- **10-level undo** — undo the last 10 actions if something goes wrong
+- **Session logging** — every hand is logged to a text file in your Documents folder
+- **Player summaries** — when a player leaves, their full session stats are logged
 
-This is not designed to be the simplest possible example, but it is also not designed to cover everything you might want to do. For more detailed questions, come ask in [the Discord](https://discord.gg/holdshift).
+---
 
-## Main Points
+## Macro Setup
 
-* Simple functional plugin
-  * Slash command
-  * Main UI
-  * Settings UI
-  * Image loading
-  * Plugin json
-* Simple, slightly-improved plugin configuration handling
-* Project organization
-  * Copies all necessary plugin files to the output directory
-    * Does not copy dependencies that are provided by dalamud
-    * Output directory can be zipped directly and have exactly what is required
-  * Hides data files from visual studio to reduce clutter
-    * Also allows having data files in different paths than VS would usually allow if done in the IDE directly
+MothJack reads the following party chat messages. Your macros should send these exact phrases via `/p`:
 
+### Session Control
+| Action | Party Chat Message |
+|--------|-------------------|
+| Seat a player | `<t> has taken a seat!` |
+| Remove a player | `<t> has relinquished their seat!` |
 
-The intention is less that any of this is used directly in other projects, and more to show how similar things can be done.
+### Dealer Hand
+| Action | Party Chat Message |
+|--------|-------------------|
+| Start dealer hand | `Dealer's Hand` |
+| Dealer draws additional card | `Dealer - Draw` |
+| Dealer stands | `Dealer stands on X` |
+| Dealer busts | `Bust!` |
+| Dealer blackjack | `Blackjack!` |
 
-## How To Use
+### Player Hand
+| Action | Party Chat Message |
+|--------|-------------------|
+| Start player hand | `<t>'s Hand` |
+| Player hits | `<t> Hits` |
+| Player doubles down | `<t> Doubles Down` |
+| Player splits | `<t> Splits` |
+| Player stands | `<t> Stands` |
+| Player busts | `<t> Busts!` |
 
-### Getting Started
+> **Note:** FFXIV replaces `<t>` with your current target's name automatically. The `/dice party 13` command in your macros is read automatically — MothJack extracts the result and applies it to the correct hand.
 
-To begin, [clone this template repository][new-repo] to your own GitHub account. This will automatically bring in everything you need to get a jumpstart on development. You do not need to fork this repository unless you intend to contribute modifications to it.
+---
 
-Be sure to also check out the [Dalamud Developer Docs][dalamud-docs] for helpful information about building your own plugin. The Developer Docs includes helpful information about all sorts of things, including [how to submit][submit] your newly-created plugin to the official repository. Assuming you use this template repository, the provided project build configuration and license are already chosen to make everything a breeze.
+## Example Macro — Player Hand
 
-[new-repo]: https://github.com/new?template_name=SamplePlugin&template_owner=goatcorp
-[dalamud-docs]: https://dalamud.dev
-[submit]: https://dalamud.dev/plugin-publishing/submission
+```
+/p <t>'s Hand <wait.1>
+/marking Circle <t> <wait.5>
+/bstance <wait.5>
+/sheathe
+/dice party 13
+/dice party 13
+```
 
-### Prerequisites
+---
 
-SamplePlugin assumes all the following prerequisites are met:
+## Example Macro — Player Hits
 
-* XIVLauncher, FINAL FANTASY XIV, and Dalamud have all been installed and the game has been run with Dalamud at least once.
-* XIVLauncher is installed to its default directories and configurations.
-  * If a custom path is required for Dalamud's dev directory, it must be set with the `DALAMUD_HOME` environment variable.
-* A .NET Core 8 SDK has been installed and configured, or is otherwise available. (In most cases, the IDE will take care of this.)
+```
+/p <t> Hits <wait.1>
+/bstance <wait.5>
+/sheathe
+/dice party 13
+```
 
-### Building
+---
 
-1. Open up `SamplePlugin.sln` in your C# editor of choice (likely [Visual Studio 2022](https://visualstudio.microsoft.com) or [JetBrains Rider](https://www.jetbrains.com/rider/)).
-2. Build the solution. By default, this will build a `Debug` build, but you can switch to `Release` in your IDE.
-3. The resulting plugin can be found at `SamplePlugin/bin/x64/Debug/SamplePlugin.dll` (or `Release` if appropriate.)
+## Game Rules Supported
 
-### Activating in-game
+- **Face cards (J/Q/K)** counted as 10 automatically
+- **Blackjack** pays 1.5x the bet
+- **Split** — original bet applies to both hands, player pays for the second hand
+- **Double Down** — bet doubles, one card dealt, hand closes
+- **Dealer bust** — all active players win automatically
+- **Dealer blackjack** — all active players lose automatically
+- **Dealer stands** — hands resolved automatically against dealer total
 
-1. Launch the game and use `/xlsettings` in chat or `xlsettings` in the Dalamud Console to open up the Dalamud settings.
-    * In here, go to `Experimental`, and add the full path to the `SamplePlugin.dll` to the list of Dev Plugin Locations.
-2. Next, use `/xlplugins` (chat) or `xlplugins` (console) to open up the Plugin Installer.
-    * In here, go to `Dev Tools > Installed Dev Plugins`, and the `SamplePlugin` should be visible. Enable it.
-3. You should now be able to use `/pmycommand` (chat) or `pmycommand` (console)!
+---
 
-Note that you only need to add it to the Dev Plugin Locations once (Step 1); it is preserved afterwards. You can disable, enable, or load your plugin on startup through the Plugin Installer.
+## Session Logs
 
-### Reconfiguring for your own uses
+Every session creates a log file at:
+```
+Documents\BlackjackDealer\session_YYYY-MM-DD_HH-mm-ss.txt
+```
 
-Replace all references to `SamplePlugin` in all the files and filenames with your desired name, then start building the plugin of your dreams. You'll figure it out 😁
+Logs include:
+- Every card dealt per player and dealer
+- Hand-by-hand results with gil amounts
+- Split hand breakdowns with combined totals
+- Player summaries on exit (hands played, won, lost, net result)
 
-Dalamud will load the JSON file (by default, `SamplePlugin/SamplePlugin.json`) next to your DLL and use it for metadata, including the description for your plugin in the Plugin Installer. Make sure to update this with information relevant to _your_ plugin!
+---
 
-All participation in this repository is governed by our [Code of Conduct](https://dalamud.dev/code-of-conduct). If you used AI tooling at any point, review the [AI Usage Policy](https://dalamud.dev/plugin-publishing/ai-policy) and disclose your level of AI use. Entirely AI-generated submissions will be rejected, and undisclosed AI use may result in a ban.
+## Dashboard UI
+
+| Element | Description |
+|---------|-------------|
+| **Dealer Total** | Running dealer hand total |
+| **Name** | Player name (split hands shown as Name (1) / Name (2)) |
+| **Bank** | Running gil balance |
+| **Bet** | Click to edit inline |
+| **Hand** | Current hand total (shows BUST or DD) |
+| **Last Result** | Result of last resolved hand |
+| **Actions** | Manual override: Win / Lose / BJ / Push / Remove |
+| **Undo** | Reverts the last action (up to 10 levels) |
+| **Reset Hand** | Clears hand totals for a new hand |
+| **End Session** | Closes the session and clears the table |
+
+---
+
+## Installation
+
+MothJack is a developer plugin and is not listed in the Dalamud plugin installer.
+
+1. Build the project in Visual Studio (Debug x64)
+2. In FFXIV, open `/xlsettings` → Experimental → Dev Plugin Locations
+3. Add the path to your build output folder
+4. Open `/xlplugins` → Dev Tools and enable MothJack
+5. Type `/blackjack` in game to open the dashboard
+
+---
+
+## Requirements
+
+- FFXIV with [XIVLauncher](https://github.com/goatcorp/FFXIVQuickLauncher)
+- Dalamud plugin framework
+- Visual Studio 2022 (to build from source)
+- .NET desktop development workload
+
+---
+
+## Notes
+
+- MothJack is dealer-side only — players do not need the plugin installed
+- Players interact normally through chat and the dealer uses macros to direct the plugin
+- Banks start at 0 and track wins/losses relative to bets placed each hand
+- The plugin does not interact with any FFXIV server data — it only reads party chat
+
+---
+
+*Built with Dalamud • Runs on FFXIV Patch 7.x*
